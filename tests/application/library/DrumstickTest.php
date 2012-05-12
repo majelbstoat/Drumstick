@@ -147,4 +147,23 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertTrue(file_exists('vfs://tests/application/library/DemoClassTest.php'));
 	}
+
+	public function testShouldNotThrowFatalErrorsForTestFunctionsThatDifferOnlyByCase() {
+		$this->_prepareDefinition('MixedCaseClass');
+
+		// Simulate the existing definitions file.
+		$expected = file_get_contents(TEST_PATH . "/fixtures/matches/MixedCaseClassTest.php");
+		vfsStreamWrapper::getRoot()->addChild(new vfsStreamDirectory('application'));
+		$expectedFile = new vfsStreamFile('MixedCaseClassTest.php');
+		$expectedFile->setContent($expected);
+		vfsStreamWrapper::getRoot()->getChild('application')->addChild(new vfsStreamDirectory('library'));
+		vfsStreamWrapper::getRoot()->getChild('application')->getChild('library')->addChild($expectedFile);
+
+		$modifiedTime = filemtime('vfs://tests/application/library/MixedCaseClassTest.php');
+
+		Drumstick::processFile(vfsStream::url('definitions'), 'MixedCaseClass.tests');
+
+		$this->assertEquals($modifiedTime, filemtime('vfs://tests/application/library/MixedCaseClassTest.php'), "File was modified when it shouldn't have been.");
+		$this->assertEquals($expected, file_get_contents('vfs://tests/application/library/MixedCaseClassTest.php'), "File content has changed.");
+	}
 }

@@ -41,6 +41,8 @@ class Drumstick {
 		" ", ".", "-", "\n"
 	);
 
+	protected static $_lastError = null;
+
 	/**
 	 * Determines whether the supplied classname is a controller definition.
 	 *
@@ -71,7 +73,7 @@ class Drumstick {
 		$className = trim(array_shift($tests)) . "Test";
 
 		foreach ($tests as & $test) {
-			$test = "test" . str_replace(self::$_disallowedCharacters, "", ucwords($test));
+			$test = "test" . str_replace(self::$_disallowedCharacters, "", ucwords(strtolower($test)));
 		}
 
 		$writer = self::getWriter($className);
@@ -98,6 +100,8 @@ class Drumstick {
 			// Sanity check.
 			if (self::_sanityCheckContents($source, $baseClass)) {
 				$writer->write($source);
+			} else {
+				throw new Exception("Contents of $className would not be sane: " . self::$_lastError);
 			}
 		}
 	}
@@ -221,8 +225,12 @@ class Drumstick {
 		$contents
 SANITY_CHECK;
 		file_put_contents("__drumstick__.php", $sanityCheckContents);
-		exec("php __drumstick__.php", $output, $return);
+		exec("php __drumstick__.php 2>&1 > __drumstick_error__", $output, $return);
 		unlink("__drumstick__.php");
+
+		self::$_lastError = ($return) ? file_get_contents('__drumstick_error__') : null;
+		unlink("__drumstick_error__");
+
 		return !$return;
 	}
 

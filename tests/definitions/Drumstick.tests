@@ -8,3 +8,4 @@ Should not generate a controller definition file for controller plugin definitio
 Should strip non allowable characters from function names.
 Should not generate a model definition file for a model with no tertiary name.
 Should recursively process definitions path.
+Should not throw fatal errors for test functions that differ only by case.
