@@ -1,0 +1,20 @@
+<phpunit bootstrap="./bootstrap.php" colors="true">
+	<testsuite name="Drumstick">
+		<directory>./application</directory>
+	</testsuite>
+
+	<filter>
+		<whitelist>
+			<directory suffix=".php">../library</directory>
+			<exclude>
+				<directory suffix=".php">../library/PHPUnit</directory>		
+				<directory suffix=".php">../library/Zend</directory>		
+			</exclude>
+		</whitelist>
+	</filter>
+
+	<logging>
+		<log type="coverage-html" target="./log/report" charset="UTF-8" yui="true" highlight="true" lowUpperBound="50" highLowerBound="80" />
+		<log type="testdox-html" target="./log/testdox.html" />
+	</logging>
+</phpunit>

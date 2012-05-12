@@ -1,0 +1,17 @@
+#!/opt/local/bin/php
+<?php
+
+defined('LIBRARY_PATH') || define('LIBRARY_PATH', realpath(dirname(__FILE__) . '/../library/'));
+
+set_include_path(implode(PATH_SEPARATOR, array(LIBRARY_PATH, get_include_path())));
+
+function __autoload($class) {
+	$file = str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
+	include_once("$file");
+
+	if (!class_exists($class, false) && !interface_exists($class, false)) {
+		throw new Exception("Class $class could not be loaded.");
+	}
+}
+
+Drumstick::main(realpath(isset($argv[1]) ? $argv[1] : '.'));
