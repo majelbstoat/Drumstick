@@ -11,11 +11,17 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 		vfsStreamWrapper::getRoot()->addChild(new vfsStreamDirectory('definitions'));
 	}
 
-	protected function _prepareDefinition($filename) {
+	protected function _prepareDefinition($filename, $subdirectory = null) {
 		$sourceData = file_get_contents(TEST_PATH . "/fixtures/definitions/$filename.tests");
 		$file = new vfsStreamFile("$filename.tests");
 		$file->setContent($sourceData);
-		vfsStreamWrapper::getRoot()->getChild('definitions')->addChild($file);
+
+		$path = vfsStreamWrapper::getRoot()->getChild('definitions');
+		if (null !== $subdirectory) {
+			$path->addChild(new vfsStreamDirectory($subdirectory));
+			$path = $path->getChild($subdirectory);
+		}
+		$path->addChild($file);
 	}
 
 	public function testShouldNotTruncateFunctionsThatAlreadyExist() {
@@ -32,7 +38,7 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 
 		$modifiedTime = filemtime('vfs://tests/application/library/ExistingClassTest.php');
 
-		Drumstick::processFile('ExistingClass.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'ExistingClass.tests');
 
 		$this->assertEquals($modifiedTime, filemtime('vfs://tests/application/library/ExistingClassTest.php'), "File was modified when it shouldn't have been.");
 		$this->assertEquals($expected, file_get_contents('vfs://tests/application/library/ExistingClassTest.php'), "File content has changed.");
@@ -44,7 +50,7 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertFalse(file_exists('vfs://tests/application/library/DemoClassTest.php'));
 
-		Drumstick::processFile('DemoClass.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'DemoClass.tests');
 
 		$this->assertTrue(file_exists('vfs://tests/application/library/DemoClassTest.php'));
 	}
@@ -55,7 +61,7 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertFalse(file_exists('vfs://tests/application/models/DemoTest.php'));
 
-		Drumstick::processFile('DemoModel.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'DemoModel.tests');
 
 		$this->assertTrue(file_exists('vfs://tests/application/models/DemoTest.php'));
 	}
@@ -73,7 +79,7 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertTrue(file_exists('vfs://tests/application/library/AppendedClassTest.php'));
 
-		Drumstick::processFile('AppendedClass.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'AppendedClass.tests');
 
 		$after = file_get_contents(TEST_PATH . "/fixtures/matches/AppendedClassAfterProcessing.php");
 
@@ -86,7 +92,7 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 		$this->assertFalse(file_exists('vfs://tests/application/controllers/MagicTest.php'), "Output file already exists in the incorrect place.");
 		$this->assertFalse(file_exists('vfs://tests/application/library/Test/Controller/Plugin/MagicTest.php'), "Output file already exists in the correct place.");
 
-		Drumstick::processFile('ControllerPlugin.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'ControllerPlugin.tests');
 
 		// As this is a controller plugin, it should not have created a controller test.
 		$this->assertFalse(file_exists('vfs://tests/application/controllers/MagicTest.php'), "File was created in the wrong hierarchy.");
@@ -100,7 +106,7 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertFalse(file_exists('vfs://tests/application/library/DisallowedTest.php'));
 
-		Drumstick::processFile('DisallowedCharacter.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'DisallowedCharacter.tests');
 
 		// As this is a controller plugin, it should have created a test suite in the library hierarchy.
 		$this->assertTrue(file_exists('vfs://tests/application/library/DisallowedTest.php'));
@@ -112,7 +118,7 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 
 		$this->assertFalse(file_exists('vfs://tests/application/behaviours/DemoBehaviourTest.php'));
 
-		Drumstick::processFile('DemoBehaviour.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'DemoBehaviour.tests');
 
 		$this->assertTrue(file_exists('vfs://tests/application/behaviours/DemoBehaviourTest.php'));
 	}
@@ -123,12 +129,22 @@ class DrumstickTest extends PHPUnit_Framework_TestCase {
 		$this->assertFalse(file_exists('vfs://tests/application/models/ModelTest.php'));
 		$this->assertFalse(file_exists('vfs://tests/application/library/Test/ModelTest.php'));
 
-		Drumstick::processFile('ModelBase.tests');
+		Drumstick::processFile(vfsStream::url('definitions'), 'ModelBase.tests');
 
 		// As this is a controller plugin, it should not have created a controller test.
 		$this->assertFalse(file_exists('vfs://tests/application/models/ModelTest.php'));
 
 		// As this is a controller plugin, it should have created a test suite in the library hierarchy.
 		$this->assertTrue(file_exists('vfs://tests/application/library/Test/ModelTest.php'));
+	}
+
+	public function testShouldRecursivelyProcessDefinitionsPath() {
+		$this->_prepareDefinition('DemoClass', 'subdirectory');
+
+		$this->assertFalse(file_exists('vfs://tests/application/library/DemoClassTest.php'));
+
+		Drumstick::processDirectory(vfsStream::url('definitions'));
+
+		$this->assertTrue(file_exists('vfs://tests/application/library/DemoClassTest.php'));
 	}
 }

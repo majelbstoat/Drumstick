@@ -31,13 +31,6 @@ class Drumstick {
 	protected static $_writers = array();
 
 	/**
-	 * The path to the test definitions.
-	 *
-	 * @var string
-	 */
-	protected static $_definitionPath = null;
-
-	/**
 	 * Path to the root of the tests directory.
 	 *
 	 * @var string
@@ -73,8 +66,8 @@ class Drumstick {
 	 *
 	 * @param string $file
 	 */
-	public static function processFile($file) {
-		$tests = file(self::$_definitionPath . DIRECTORY_SEPARATOR . $file);
+	public static function processFile($absolutePath, $file) {
+		$tests = file($absolutePath . DIRECTORY_SEPARATOR . $file);
 		$className = trim(array_shift($tests)) . "Test";
 
 		foreach ($tests as & $test) {
@@ -116,7 +109,6 @@ class Drumstick {
 	 */
 	public static function setPaths($root) {
 		self::setRootPath($root);
-		self::setDefinitionPath($root . "/definitions");
 	}
 
 	/**
@@ -126,15 +118,6 @@ class Drumstick {
 	 */
 	public static function setRootPath($root) {
 		self::$_rootPath = $root;
-	}
-
-	/**
-	 * Sets the path to definitions.
-	 *
-	 * @param string $definitionPath
-	 */
-	public static function setDefinitionPath($definitionPath) {
-		self::$_definitionPath = $definitionPath;
 	}
 
 	/**
@@ -152,13 +135,12 @@ class Drumstick {
 	 * @param string $path
 	 */
 	public static function processDirectory($path) {
-		self::setPaths($path);
-		$files = scandir(self::$_definitionPath);
-
+		$files = array_diff(scandir($path), array('..', '.'));
 		foreach ($files as $file) {
-			list($filename, $extension) = explode('.', $file);
-			if ('tests' === $extension) {
-				self::processFile($file);
+			if (is_dir($path . DIRECTORY_SEPARATOR . $file)) {
+				self::processDirectory($path . DIRECTORY_SEPARATOR . $file);
+			} elseif ('.tests' === substr($file, -6)) {
+				self::processFile($path, $file);
 			}
 		}
 	}
@@ -170,7 +152,8 @@ class Drumstick {
 	 */
 	public static function main($path) {
 		echo "Running $path\n";
-		self::processDirectory($path);
+		self::setPaths($path);
+		self::processDirectory($path . DIRECTORY_SEPARATOR . 'definitions');
 	}
 
 	/**
