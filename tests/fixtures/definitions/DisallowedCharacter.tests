@@ -1,2 +1,3 @@
 Disallowed
 Should strip hypens and other non-allowed characters from function names.
+Should strip commas from function names, if necessary.

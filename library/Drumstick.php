@@ -37,10 +37,6 @@ class Drumstick {
 	 */
 	protected static $_rootPath = null;
 
-	protected static $_disallowedCharacters = array(
-		" ", ".", "-", "\n"
-	);
-
 	protected static $_lastError = null;
 
 	/**
@@ -73,7 +69,7 @@ class Drumstick {
 		$className = trim(array_shift($tests)) . "Test";
 
 		foreach ($tests as & $test) {
-			$test = "test" . str_replace(self::$_disallowedCharacters, "", ucwords(strtolower($test)));
+			$test = "test" . preg_replace("/[^a-z]/i", "", ucwords(strtolower($test)));
 		}
 
 		$writer = self::getWriter($className);
