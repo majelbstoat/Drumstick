@@ -69,7 +69,7 @@ class Drumstick {
 		$className = trim(array_shift($tests)) . "Test";
 
 		foreach ($tests as & $test) {
-			$test = "test" . preg_replace("/[^a-z]/i", "", ucwords(strtolower($test)));
+			$test = "test" . preg_replace("/[^a-z\d]/i", "", ucwords(strtolower($test)));
 		}
 
 		$writer = self::getWriter($className);
@@ -84,11 +84,19 @@ class Drumstick {
 			$missingTests = array_diff($tests, $existingTests);
 
 			if ($missingTests) {
+				echo "Updating $className\n";
+				foreach ($missingTests as $missingTest) {
+					echo " - $missingTest\n";
+				}
 				$source = $writer->getSource();
 				$source = self::_appendTests($source, $missingTests);
 			}
 		} else {
 			// Create new definition.
+			echo "Creating $className\n";
+			foreach ($tests as $test) {
+				echo " - $test\n";
+			}
 			$source = self::_getClassDefinition($className, $baseClass, $tests);
 		}
 
@@ -260,8 +268,6 @@ FUNCTION_DEFINITION;
 class $class extends $baseClass {
 
 	// Tests
-
-
 CLASS_HEADER_DEFINITION;
 
 		foreach ($functions as $function) {
