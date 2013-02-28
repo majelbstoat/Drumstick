@@ -71,6 +71,7 @@ class Drumstick {
 		foreach ($tests as & $test) {
 			$test = "test" . preg_replace("/[^a-z\d]/i", "", ucwords(strtolower($test)));
 		}
+		unset($test);
 
 		$writer = self::getWriter($className);
 
